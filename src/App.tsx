@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PublicLayout from "./layouts/PublicLayout";
 import PortalLayout from "./layouts/PortalLayout";
+import AdminLayout from "./layouts/AdminLayout";
 import Index from "./pages/Index";
 import About from "./pages/About";
 import Services from "./pages/Services";
@@ -20,6 +21,13 @@ import Tracker from "./pages/portal/Tracker";
 import Courses from "./pages/portal/Courses";
 import Rewards from "./pages/portal/Rewards";
 import Profile from "./pages/portal/Profile";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminServices from "./pages/admin/AdminServices";
+import AdminBookings from "./pages/admin/AdminBookings";
+import AdminRewards from "./pages/admin/AdminRewards";
+import AdminCMS from "./pages/admin/AdminCMS";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -54,6 +62,17 @@ const App = () => (
             <Route path="courses" element={<Courses />} />
             <Route path="rewards" element={<Rewards />} />
             <Route path="profile" element={<Profile />} />
+          </Route>
+
+          {/* Admin Routes */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="users" element={<AdminUsers />} />
+            <Route path="events" element={<AdminEvents />} />
+            <Route path="services" element={<AdminServices />} />
+            <Route path="bookings" element={<AdminBookings />} />
+            <Route path="rewards" element={<AdminRewards />} />
+            <Route path="cms" element={<AdminCMS />} />
           </Route>
 
           {/* 404 */}
