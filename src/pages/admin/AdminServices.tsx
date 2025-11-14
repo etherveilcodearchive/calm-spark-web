@@ -1,21 +1,31 @@
-import { useState } from "react";
-import { Search, Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import DataTable from "@/components/admin/DataTable";
+import api from "@/lib/api";
 
 const AdminServices = () => {
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const [services] = useState([
-    { id: 1, name: "Yoga Classes", category: "Fitness", price: "PKR 5,000/month", status: "Active" },
-    { id: 2, name: "Meditation Sessions", category: "Wellness", price: "PKR 3,000/month", status: "Active" },
-    { id: 3, name: "Therapy Consultation", category: "Mental Health", price: "PKR 8,000/session", status: "Active" },
-    { id: 4, name: "Nutrition Counseling", category: "Health", price: "PKR 6,000/month", status: "Inactive" },
-  ]);
+  useEffect(() => {
+    fetchServices();
+  }, []);
+
+  const fetchServices = async () => {
+    try {
+      const response = await api.get('/services');
+      setServices(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load services",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     { key: "name", label: "Service Name" },
@@ -38,13 +48,30 @@ const AdminServices = () => {
     });
   };
 
-  const handleDelete = (service: any) => {
-    toast({
-      title: "Delete Service",
-      description: `${service.name} deleted successfully`,
-      variant: "destructive",
-    });
+  const handleDelete = async (service: any) => {
+    try {
+      await api.delete(`/services/${service.id}`);
+      toast({
+        title: "Delete Service",
+        description: `${service.name} deleted successfully`,
+      });
+      fetchServices();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete service",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

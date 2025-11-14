@@ -1,17 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import DataTable from "@/components/admin/DataTable";
+import api from "@/lib/api";
 
 const AdminEvents = () => {
   const { toast } = useToast();
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const [events] = useState([
-    { id: 1, name: "Morning Yoga Session", date: "2025-11-20", time: "10:00 AM", capacity: 20, registered: 15 },
-    { id: 2, name: "Mindfulness Workshop", date: "2025-11-22", time: "2:00 PM", capacity: 30, registered: 24 },
-    { id: 3, name: "Meditation Retreat", date: "2025-11-25", time: "9:00 AM", capacity: 15, registered: 8 },
-    { id: 4, name: "Nutrition Seminar", date: "2025-11-28", time: "3:00 PM", capacity: 25, registered: 18 },
-  ]);
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      const response = await api.get('/events');
+      setEvents(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load events",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     { key: "name", label: "Event Name" },
@@ -35,13 +49,30 @@ const AdminEvents = () => {
     });
   };
 
-  const handleDelete = (event: any) => {
-    toast({
-      title: "Delete Event",
-      description: `${event.name} deleted successfully`,
-      variant: "destructive",
-    });
+  const handleDelete = async (event: any) => {
+    try {
+      await api.delete(`/events/${event.id}`);
+      toast({
+        title: "Delete Event",
+        description: `${event.name} deleted successfully`,
+      });
+      fetchEvents();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete event",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

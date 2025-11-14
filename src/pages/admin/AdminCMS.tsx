@@ -1,38 +1,74 @@
-import { useState } from "react";
-import { Save, FileText, Image, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Save, FileText, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
+import api from "@/lib/api";
 
 const AdminCMS = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("homepage");
-
-  // Mock content data
+  const [loading, setLoading] = useState(true);
   const [content, setContent] = useState({
     homepage: {
-      heroTitle: "Discover Inner Peace Through Mindful Wellness",
-      heroSubtitle: "Pakistan's first AI-driven wellness ecosystem",
-      aboutPreview: "At Mindful Yogi, we blend ancient wisdom with modern technology...",
+      heroTitle: "",
+      heroSubtitle: "",
+      aboutPreview: "",
     },
     about: {
-      mission: "To make wellness accessible to everyone in Pakistan through AI-powered guidance...",
-      vision: "A society where mental and physical wellness is prioritized...",
+      mission: "",
+      vision: "",
     },
     services: {
-      intro: "Explore our comprehensive wellness services designed for your journey...",
+      intro: "",
     },
   });
 
-  const handleSave = (section: string) => {
-    toast({
-      title: "Content Saved",
-      description: `${section} content has been updated successfully`,
-    });
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    try {
+      const response = await api.get('/cms');
+      setContent(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load content",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleSave = async (section: string) => {
+    try {
+      await api.put('/cms', content);
+      toast({
+        title: "Content Saved",
+        description: `${section} content has been updated successfully`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save content",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

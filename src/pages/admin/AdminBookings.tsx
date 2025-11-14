@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -10,24 +10,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import api from "@/lib/api";
 
 const AdminBookings = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const bookings = [
-    { id: 1, user: "John Doe", service: "Yoga Classes", date: "2025-11-20", time: "10:00 AM", status: "Confirmed" },
-    { id: 2, user: "Jane Smith", service: "Meditation Sessions", date: "2025-11-21", time: "2:00 PM", status: "Pending" },
-    { id: 3, user: "Ali Khan", service: "Therapy Consultation", date: "2025-11-22", time: "11:00 AM", status: "Completed" },
-    { id: 4, user: "Sara Ahmed", service: "Nutrition Counseling", date: "2025-11-23", time: "3:00 PM", status: "Cancelled" },
-  ];
+  useEffect(() => {
+    fetchBookings();
+  }, []);
 
-  const filteredBookings = bookings.filter(booking => {
-    const matchesSearch = booking.user.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         booking.service.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || booking.status.toLowerCase() === statusFilter;
+  const fetchBookings = async () => {
+    try {
+      const response = await api.get('/bookings');
+      setBookings(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load bookings",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredBookings = bookings.filter((booking: any) => {
+    const matchesSearch = booking.user?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         booking.service?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || booking.status?.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -41,12 +55,30 @@ const AdminBookings = () => {
     }
   };
 
-  const handleStatusChange = (bookingId: number, newStatus: string) => {
-    toast({
-      title: "Status Updated",
-      description: `Booking #${bookingId} status changed to ${newStatus}`,
-    });
+  const handleStatusChange = async (bookingId: number, newStatus: string) => {
+    try {
+      await api.patch(`/bookings/${bookingId}`, { status: newStatus });
+      toast({
+        title: "Status Updated",
+        description: `Booking #${bookingId} status changed to ${newStatus}`,
+      });
+      fetchBookings();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update booking status",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
