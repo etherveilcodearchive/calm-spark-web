@@ -1,7 +1,47 @@
+import { useState, useEffect } from "react";
 import { Users, Calendar, BookOpen, Gift } from "lucide-react";
 import StatsCard from "@/components/admin/StatsCard";
+import api from "@/lib/api";
 
 const AdminDashboard = () => {
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    eventsThisMonth: 0,
+    activeBookings: 0,
+    rewardsGiven: 0,
+  });
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [statsRes, activityRes, eventsRes] = await Promise.all([
+          api.get('/dashboard/stats'),
+          api.get('/dashboard/activity'),
+          api.get('/dashboard/upcoming-events'),
+        ]);
+        setStats(statsRes.data);
+        setRecentActivity(activityRes.data);
+        setUpcomingEvents(eventsRes.data);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -12,25 +52,25 @@ const AdminDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Users"
-          value="1,234"
+          value={stats.totalUsers.toString()}
           icon={Users}
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Events This Month"
-          value="42"
+          value={stats.eventsThisMonth.toString()}
           icon={Calendar}
           trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
           title="Active Bookings"
-          value="86"
+          value={stats.activeBookings.toString()}
           icon={BookOpen}
           trend={{ value: 5, isPositive: false }}
         />
         <StatsCard
           title="Rewards Given"
-          value="234"
+          value={stats.rewardsGiven.toString()}
           icon={Gift}
           trend={{ value: 15, isPositive: true }}
         />
@@ -40,12 +80,7 @@ const AdminDashboard = () => {
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
           <h2 className="text-xl font-serif mb-4">Recent Activity</h2>
           <div className="space-y-4">
-            {[
-              { user: "John Doe", action: "registered for Yoga Class", time: "2 hours ago" },
-              { user: "Jane Smith", action: "completed Meditation Session", time: "4 hours ago" },
-              { user: "Ali Khan", action: "booked Therapy Consultation", time: "6 hours ago" },
-              { user: "Sara Ahmed", action: "earned 50 reward points", time: "1 day ago" },
-            ].map((activity, index) => (
+            {recentActivity.map((activity: any, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between py-3 border-b border-border last:border-0 animate-fade-in"
@@ -64,11 +99,7 @@ const AdminDashboard = () => {
         <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
           <h2 className="text-xl font-serif mb-4">Upcoming Events</h2>
           <div className="space-y-4">
-            {[
-              { name: "Morning Yoga Session", date: "Nov 20, 2025", attendees: 15 },
-              { name: "Mindfulness Workshop", date: "Nov 22, 2025", attendees: 24 },
-              { name: "Meditation Retreat", date: "Nov 25, 2025", attendees: 8 },
-            ].map((event, index) => (
+            {upcomingEvents.map((event: any, index) => (
               <div
                 key={index}
                 className="flex items-center justify-between py-3 border-b border-border last:border-0 animate-fade-in"

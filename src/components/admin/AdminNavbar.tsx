@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminNavbarProps {
   onToggleSidebar: () => void;
@@ -16,6 +17,12 @@ interface AdminNavbarProps {
 
 const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
     <header className="bg-card border-b border-border px-6 py-4">
@@ -44,7 +51,7 @@ const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
                 <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
                   <User className="h-4 w-4 text-primary" />
                 </div>
-                <span className="hidden md:inline text-sm font-medium">Admin User</span>
+                <span className="hidden md:inline text-sm font-medium">{user?.name || user?.email || "Admin"}</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -54,7 +61,7 @@ const AdminNavbar = ({ onToggleSidebar }: AdminNavbarProps) => {
                 <User className="h-4 w-4 mr-2" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/login")}>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </DropdownMenuItem>

@@ -1,22 +1,48 @@
-import { useState } from "react";
-import { Search, Gift, Award, TrendingUp } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { Gift, Award, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DataTable from "@/components/admin/DataTable";
 import StatsCard from "@/components/admin/StatsCard";
+import api from "@/lib/api";
 
 const AdminRewards = () => {
   const { toast } = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [rewards, setRewards] = useState([]);
+  const [stats, setStats] = useState({
+    totalPoints: 0,
+    activeRewards: 0,
+    redemptionRate: 0,
+  });
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const [rewards] = useState([
-    { id: 1, user: "John Doe", points: 1250, tier: "Gold", lastActivity: "2 days ago" },
-    { id: 2, user: "Jane Smith", points: 850, tier: "Silver", lastActivity: "1 week ago" },
-    { id: 3, user: "Ali Khan", points: 2100, tier: "Platinum", lastActivity: "Today" },
-    { id: 4, user: "Sara Ahmed", points: 450, tier: "Bronze", lastActivity: "3 days ago" },
-  ]);
+  useEffect(() => {
+    fetchRewards();
+    fetchStats();
+  }, []);
+
+  const fetchRewards = async () => {
+    try {
+      const response = await api.get('/rewards');
+      setRewards(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load rewards",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const response = await api.get('/rewards/stats');
+      setStats(response.data);
+    } catch (error) {
+      console.error('Error fetching reward stats:', error);
+    }
+  };
 
   const columns = [
     { key: "user", label: "User" },
@@ -39,13 +65,30 @@ const AdminRewards = () => {
     });
   };
 
-  const handleDelete = (reward: any) => {
-    toast({
-      title: "Remove Reward",
-      description: `Reward for ${reward.user} removed successfully`,
-      variant: "destructive",
-    });
+  const handleDelete = async (reward: any) => {
+    try {
+      await api.delete(`/rewards/${reward.id}`);
+      toast({
+        title: "Remove Reward",
+        description: `Reward for ${reward.user} removed successfully`,
+      });
+      fetchRewards();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove reward",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -59,19 +102,19 @@ const AdminRewards = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatsCard
           title="Total Points Distributed"
-          value="24,580"
+          value={stats.totalPoints.toString()}
           icon={Gift}
           trend={{ value: 12, isPositive: true }}
         />
         <StatsCard
           title="Active Rewards"
-          value="156"
+          value={stats.activeRewards.toString()}
           icon={Award}
           trend={{ value: 8, isPositive: true }}
         />
         <StatsCard
           title="Redemption Rate"
-          value="68%"
+          value={`${stats.redemptionRate}%`}
           icon={TrendingUp}
           trend={{ value: 5, isPositive: true }}
         />

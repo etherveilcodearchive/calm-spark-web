@@ -1,17 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import DataTable from "@/components/admin/DataTable";
+import api from "@/lib/api";
 
 const AdminUsers = () => {
   const { toast } = useToast();
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data
-  const [users] = useState([
-    { id: 1, name: "John Doe", email: "john@example.com", role: "Member", status: "Active" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", role: "Premium", status: "Active" },
-    { id: 3, name: "Ali Khan", email: "ali@example.com", role: "Member", status: "Inactive" },
-    { id: 4, name: "Sara Ahmed", email: "sara@example.com", role: "Premium", status: "Active" },
-  ]);
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      setUsers(response.data);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load users",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     { key: "name", label: "Name" },
@@ -34,13 +48,30 @@ const AdminUsers = () => {
     });
   };
 
-  const handleDelete = (user: any) => {
-    toast({
-      title: "Delete User",
-      description: `${user.name} deleted successfully`,
-      variant: "destructive",
-    });
+  const handleDelete = async (user: any) => {
+    try {
+      await api.delete(`/users/${user.id}`);
+      toast({
+        title: "Delete User",
+        description: `${user.name} deleted successfully`,
+      });
+      fetchUsers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete user",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
